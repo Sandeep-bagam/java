@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: ${{ env.JAVA_HOME }}
+          java-version: ${{ var.JAVA_HOME }}
           cache: 'maven'
 
       - name: Install dependencies
