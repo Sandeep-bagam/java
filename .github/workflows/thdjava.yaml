@@ -17,6 +17,6 @@ jobs:
   	with:
     	  distribution: 'temurin' # See 'Supported distributions' for available options
     	  java-version: ${{env.JAVA_HOME}}
-	  cache: maven
+	  cache: 'maven'
       - name: install dependencies
         run: mvn install
