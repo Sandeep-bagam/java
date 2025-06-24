@@ -6,6 +6,25 @@ on:
   pull_request:
     branches: [main, dev]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      skip_tests:
+        description: 'Skip tests during build'
+        required: false
+        default: false
+        type: boolean
+      custom_message:
+        description: 'Custom deployment message'
+        required: false
+        default: 'Manual deployment'
+        type: string
 
 jobs:
   build:
