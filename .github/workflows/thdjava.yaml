@@ -1,0 +1,22 @@
+name: the home depot java project
+
+on:
+  push: [main, dev]
+  pull_request: [main, dev]
+
+env:
+  JAVA_HOME: 11
+jobs:
+  runs-on: ubuntu-latest
+  build:
+    steps:
+      - name: checkout java app repo
+        uses: actions/checkout@v4
+      - name: setup java build
+        uses: actions/setup-java@v4
+  	with:
+    	  distribution: 'temurin' # See 'Supported distributions' for available options
+    	  java-version: ${{env.JAVA_HOME}}
+	  cache: maven
+      - name: install dependencies
+        run: mvn install
