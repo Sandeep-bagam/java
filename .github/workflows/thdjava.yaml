@@ -30,9 +30,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     if: github.event.inputs.skip_tests != 'true' || github.event_name != 'workflow_dispatch'
-    environment:
-      name: test
-    steps:
+    steps:            
       - name: Checkout Java app repo
         uses: actions/checkout@v4
         
@@ -42,7 +40,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'maven'
-          
+      - name: manual approval
+        uses: trstringer/manual-approval@v1
+        with:
+          approvers: sandeep-bagam
+
       - name: Install dependencies
         run: mvn clean install
         
