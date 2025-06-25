@@ -40,19 +40,26 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'maven'
-      - name: manual approval
+      - name: Manual Approval for Production Deployment
         uses: trstringer/manual-approval@v1
         with:
-          secret: ${{ github.TOKEN }}
+          secret: ${{ secrets.GITHUB_TOKEN }}
           approvers: sandeep-bagam
           minimum-approvals: 1
-          issue-title: "Deploying v1.3.5 to prod from staging"
-          issue-body: "Please approve or deny the deployment of version v1.3.5."
-          #issue-body-file-path: relative/file_path/wrt/repo/root
+          issue-title: "🚀 Production Deployment Approval Required"
+          issue-body: |
+            **Deployment Details:**
+            - Branch: ${{ github.ref_name }}
+            - Commit: ${{ github.sha }}
+            - Environment: Production
+            - Triggered by: ${{ github.actor }}
+            
+            Please review and approve this production deployment.
+            
+            **To approve:** Comment `approve` or `approved`
+            **To deny:** Comment `deny` or `denied`
           exclude-workflow-initiator-as-approver: false
           fail-on-denial: true
-          additional-approved-words: ''
-          additional-denied-words: ''
 
       - name: Install dependencies
         run: mvn clean install
