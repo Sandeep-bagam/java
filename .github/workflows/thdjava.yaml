@@ -29,33 +29,58 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: JAVA_HOME
+    # Skip build if tests are skipped and it's a manual trigger
+    if: github.event.inputs.skip_tests != 'true' || github.event_name != 'workflow_dispatch'
     steps:
       - name: Checkout Java app repo
         uses: actions/checkout@v4
-
+        
       - name: Setup Java build
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: ${{ vars.JAVA_HOME }}
+          java-version: '17'  # Fixed: use actual version number
           cache: 'maven'
-
+          
       - name: Install dependencies
-        run: mvn install
-
-      - name: upload artifact to github
+        run: mvn clean install
+        
+      - name: Run tests
+        if: github.event.inputs.skip_tests != 'true'
+        run: mvn test
+        
+      - name: Build application
+        run: mvn package -DskipTests=${{ github.event.inputs.skip_tests == 'true' }}
+        
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: my-artifact
-          path: /home/runner/.m2/repository/com/example/java-demo-app/*
+          name: java-app-build
+          path: target/*.jar  # Fixed: upload actual build output
 
   deploy:
-    name: deploy job
+    name: Deploy Job
     runs-on: ubuntu-latest
     needs: build
+    # Only deploy if it's main branch or manual trigger
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    # Use the selected environment for manual runs, default to staging for auto runs
+    environment: ${{ github.event.inputs.environment || 'staging' }}
     steps:
-      - name: download artifact
+      - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: my-artifact
+          name: java-app-build
+          path: ./artifacts
+          
+      - name: Display deployment info
+        run: |
+          echo "Deploying to: ${{ github.event.inputs.environment || 'staging' }}"
+          echo "Message: ${{ github.event.inputs.custom_message || 'Automatic deployment' }}"
+          echo "Skip tests was: ${{ github.event.inputs.skip_tests || 'false' }}"
+          
+      - name: Deploy application
+        run: |
+          echo "Deploying Java application..."
+          ls -la ./artifacts/
+          # Add your actual deployment commands here

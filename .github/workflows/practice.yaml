@@ -1,0 +1,94 @@
+name: practice pipeline
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+    inputs:
+      environment:
+       description: enviromnet to deploy 
+       type: choice
+       default: 'staging'
+       options:
+         - 'staging'
+         - 'production'
+      skip_tests:
+        description: to skip tests
+        type: boolean
+        default: false
+      manual_run_description:
+        description: provide manual run description
+        type: string
+        default: "provide manual run description"
+
+jobs:
+  backend_build:
+    name: practive build
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout source code
+        uses: actions/checkout@v4
+      - name: setup node dependencies
+        uses: actions/setup-node@v4
+        with: 
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - name: install dependencies
+        run: npm install
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: node-artifact
+          path: backend
+  
+  backend_test:
+    name: lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: lint and test
+        uses: actions/setup-node@v4
+      - name: test begins
+        run: npm run test:unit && npm run lint && npm run test:integration
+
+  frontend_build:
+    name: frontend build
+    runs-on: ubuntu-latest
+    steps:
+      - name: frontend checkout
+        uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      - name: isntall frontend dependencies
+        run:  npm install
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: 
+
+  backend_deploy:
+    name: deploy stage
+    runs-on: ubuntu-latest
+    needs: [backend_build, backend_test]
+    steps:
+      - name: initial deploy steps
+        uses: actions/download-artifact@v4
+        with:
+          path: 
+
+  frontend_deploy:
+    name: frontend deploy
+    needs: [frontend_build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: deploy steps
+        uses: actions/download-artifact@v4
+        with:
+          path:
+
+        
