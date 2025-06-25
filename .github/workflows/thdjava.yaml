@@ -29,7 +29,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Skip build if tests are skipped and it's a manual trigger
     if: github.event.inputs.skip_tests != 'true' || github.event_name != 'workflow_dispatch'
     steps:
       - name: Checkout Java app repo
@@ -39,7 +38,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'  # Fixed: use actual version number
+          java-version: '17'
           cache: 'maven'
           
       - name: Install dependencies
@@ -56,15 +55,38 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: java-app-build
-          path: target/*.jar  # Fixed: upload actual build output
+          path: target/*.jar
+
+  # NEW: Manual approval job for production
+  approve-production:
+    name: Approve Production Deployment
+    runs-on: ubuntu-latest
+    needs: build
+    if: |
+      (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') &&
+      (github.event.inputs.environment == 'production' || 
+       (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    environment: 
+      name: production-approval
+      # This creates a manual approval gate!
+    steps:
+      - name: Manual approval checkpoint
+        run: |
+          echo "🛑 This deployment requires manual approval"
+          echo "Deploying to: ${{ github.event.inputs.environment || 'production' }}"
+          echo "Message: ${{ github.event.inputs.custom_message || 'Automatic deployment' }}"
+          echo "Build number: ${{ github.run_number }}"
 
   deploy:
     name: Deploy Job
     runs-on: ubuntu-latest
-    needs: build
-    # Only deploy if it's main branch or manual trigger
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-    # Use the selected environment for manual runs, default to staging for auto runs
+    needs: [build, approve-production]
+    # Skip approval job dependency for staging
+    if: |
+      always() && 
+      needs.build.result == 'success' &&
+      (needs.approve-production.result == 'success' || 
+       needs.approve-production.result == 'skipped')
     environment: ${{ github.event.inputs.environment || 'staging' }}
     steps:
       - name: Download build artifact
