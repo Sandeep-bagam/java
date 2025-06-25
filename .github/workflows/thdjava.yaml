@@ -30,6 +30,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     if: github.event.inputs.skip_tests != 'true' || github.event_name != 'workflow_dispatch'
+    environment:
+      name: test
     steps:
       - name: Checkout Java app repo
         uses: actions/checkout@v4
